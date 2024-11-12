@@ -9,8 +9,10 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use PragmaRX\Google2FA\Google2FA;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens;
 
@@ -67,5 +69,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    public function validateTwoFactorCode($code)
+    {
+        if (!$this->two_factor_secret) {
+            return false;
+        }
+    
+        $google2fa = new Google2FA();
+        $secret = decrypt($this->two_factor_secret);
+    
+        return $google2fa->verifyKey($secret, $code);
     }
 }
